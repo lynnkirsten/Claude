@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Welke projectaanpak past bij jouw vraagstuk?</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              navy:  '#0A192F',
+              gold:  '#C5A059',
+              slate: '#4A5568',
+              cream: '#F9F7F2',
+              teal:  '#1B4F72',
+              rust:  '#C0392B'
+            }
+          },
+          fontFamily: {
+            serif: ['Playfair Display', 'serif'],
+            sans:  ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ── Base ── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: #F9F7F2; }
+
+    /* ── Gold divider ── */
+    .gold-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #C5A059 40%, #C5A059 60%, transparent);
+    }
+    .gold-divider-v {
+      width: 1px;
+      background: linear-gradient(180deg, transparent, #C5A059 40%, #C5A059 60%, transparent);
+    }
+
+    /* ── Menu card hover ── */
+    .menu-card {
+      transition: transform 0.35s cubic-bezier(.22,.68,0,1.2),
+                  box-shadow 0.35s ease;
+      cursor: pointer;
+    }
+    .menu-card:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 24px 48px -12px rgba(10,25,47,0.22);
+    }
+    .menu-card:active { transform: scale(0.98); }
+
+    /* ── Selected state ── */
+    .menu-card.selected {
+      outline: 2.5px solid #C5A059;
+      box-shadow: 0 0 0 4px rgba(197,160,89,0.18), 0 24px 48px -12px rgba(10,25,47,0.22);
+    }
+
+    /* ── Tag pill ── */
+    .tag {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      border: 1px solid currentColor;
+      white-space: nowrap;
+    }
+
+    /* ── Sticky question bar ── */
+    .question-bar {
+      background: rgba(10,25,47,0.97);
+      backdrop-filter: blur(10px);
+    }
+
+    /* ── Animated underline button ── */
+    .btn-underline {
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-underline::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 0; height: 2px;
+      background: #C5A059;
+      transition: width 0.3s ease;
+    }
+    .btn-underline:hover::after { width: 100%; }
+
+    /* ── Appear animation ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.55s ease both; }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+
+    /* ── Diagonal header accent ── */
+    .header-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 80% at 80% 120%, rgba(197,160,89,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 60% at 20% -20%, rgba(197,160,89,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ── Section number badge ── */
+    .section-badge {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-weight: 700; font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    /* ── Collapsible detail ── */
+    .detail-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.4s ease;
+      opacity: 0;
+    }
+    .detail-panel.open {
+      max-height: 400px;
+      opacity: 1;
+    }
+
+    /* ── Progress indicator ── */
+    #progress-bar {
+      height: 3px;
+      background: #C5A059;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    /* ── Modal overlay ── */
+    #modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(10,25,47,0.75);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    #modal-overlay.show { display: flex; }
+
+    /* ── Tooltip ── */
+    .tooltip-wrap { position: relative; }
+    .tooltip-box {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%; transform: translateX(-50%);
+      background: #0A192F;
+      color: #F9F7F2;
+      font-size: 11px; line-height: 1.5;
+      padding: 8px 12px; border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0; transition: opacity 0.2s;
+      z-index: 50;
+    }
+    .tooltip-box::after {
+      content: '';
+      position: absolute;
+      top: 100%; left: 50%; transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #0A192F;
+    }
+    .tooltip-wrap:hover .tooltip-box { opacity: 1; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #F9F7F2; }
+    ::-webkit-scrollbar-thumb { background: #C5A059; border-radius: 3px; }
+  </style>
+</head>
+
+<body class="min-h-screen text-brand-navy">
+
+  <!-- ── Progress bar ── -->
+  <div class="fixed top-0 left-0 right-0 z-50" style="height:3px;background:rgba(197,160,89,0.15);">
+    <div id="progress-bar"></div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       HEADER
+  ════════════════════════════════════════ -->
+  <header class="header-bg relative bg-brand-navy text-white pt-14 pb-12 px-6 text-center overflow-hidden" data-purpose="header">
+    <div class="relative z-10 max-w-2xl mx-auto">
+      <!-- Eyebrow -->
+      <p class="fade-up uppercase tracking-[0.35em] text-[10px] font-semibold text-brand-gold mb-3">
+        ODV · Projectmanagement Nodig
+      </p>
+      <!-- Main title -->
+      <h1 class="fade-up delay-1" style="font-family:'Playfair Display',serif; font-size:clamp(1.8rem,5vw,3rem); font-weight:700; line-height:1.2; margin-bottom:1rem;">
+        Welke projectaanpak<br/>
+        <em style="color:#C5A059;">past bij jouw vraagstuk?</em>
+      </h1>
+      <!-- Divider -->
+      <div class="fade-up delay-2 gold-divider w-28 mx-auto mb-4"></div>
+      <!-- Subtitle -->
+      <p class="fade-up delay-3 text-sm font-light text-slate-300 max-w-sm mx-auto leading-relaxed" style="font-family:'Inter',sans-serif;">
+        Ik heb een vraagstuk en wil weten welke werkwijze past.<br/>
+        <span class="text-brand-gold/80 text-xs italic">Selecteer jouw situatie hieronder.</span>
+      </p>
+      <!-- Question pill -->
+      <div class="fade-up delay-4 mt-6 inline-flex items-center gap-2 bg-white/10 border border-brand-gold/30 rounded-full px-5 py-2">
+        <span class="text-brand-gold text-lg">?</span>
+        <span class="text-xs text-slate-300 font-medium">Raakt dit meerdere onderdelen binnen ODV — of speelt het binnen één specifiek onderdeel?</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════════
+       STICKY SECTION NAV
+  ════════════════════════════════════════ -->
+  <nav class="question-bar sticky top-0 z-40 flex items-center justify-center gap-6 py-3 px-6 border-b border-brand-gold/20">
+    <a href="#section-meerdere" class="btn-underline text-[10px] uppercase tracking-[0.2em] text-brand-gold font-semibold py-1">
+      Meerdere onderdelen
+    </a>
+    <div class="w-px h-4 bg-brand-gold/30"></div>
+    <a href="#section-een" class="btn-underline text-[10px] uppercase tracking-[0.2em] text-slate-400 hover:text-brand-gold font-semibold py-1 transition-colors">
+      Één onderdeel
+    </a>
+    <div class="w-px h-4 bg-brand-gold/30"></div>
+    <a href="#section-starten" class="btn-underline text-[10px] uppercase tracking-[0.2em] text-slate-400 hover:text-brand-gold font-semibold py-1 transition-colors">
+      Klaar om te starten
+    </a>
+  </nav>
+
+  <!-- ════════════════════════════════════════
+       MAIN CONTENT
+  ════════════════════════════════════════ -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-14 space-y-20">
+
+    <!-- ─────────────────────────────────────
+         SECTION 1 — Meerdere onderdelen
+    ───────────────────────────────────── -->
+    <section id="section-meerdere" data-purpose="service-category">
+      <!-- Section header -->
+      <div class="flex items-center gap-4 mb-10">
+        <div class="section-badge bg-brand-navy text-brand-gold border-2 border-brand-gold">1</div>
+        <div>
+          <h2 style="font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:700; color:#0A192F;">
+            Meerdere ODV-onderdelen betrokken
+          </h2>
+          <p class="text-xs text-brand-slate uppercase tracking-widest mt-0.5">Dit raakt meerdere bedrijfsonderdelen binnen ODV.</p>
+        </div>
+      </div>
+      <div class="gold-divider mb-10"></div>
+
+      <!-- Sub-heading: Hoe regel je de sturing? -->
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-2 h-2 rounded-full bg-brand-gold flex-shrink-0"></div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-brand-slate">Hoe regel je de sturing?</p>
+        <div class="flex-1 h-px bg-brand-gold/20"></div>
+        <p class="text-[11px] text-brand-slate italic">Bij een 1ODV-project kies je hoe regie en besluitvorming zijn ingericht.</p>
+      </div>
+
+      <!-- Cards grid -->
+      <div class="grid md:grid-cols-2 gap-6">
+
+        <!-- ── Card: Gedeelde besturing ── -->
+        <article
+          class="menu-card bg-white rounded-sm shadow-md border-t-2 border-brand-gold/40 p-7 flex flex-col"
+          data-card="gedeelde-besturing"
+          onclick="selectCard(this)"
+          data-purpose="menu-item"
+        >
+          <!-- Tag chip -->
+          <div class="flex items-center justify-between mb-4">
+            <span class="tag text-brand-teal border-brand-teal/40 bg-brand-teal/5">Meerdere onderdelen</span>
+            <span class="tooltip-wrap cursor-help">
+              <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke-width="1.5"/>
+                <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-width="2"/>
+              </svg>
+              <span class="tooltip-box">Gedeeld eigenaarschap per onderdeel</span>
+            </span>
+          </div>
+
+          <h3 style="font-family:'Playfair Display',serif; font-size:1.25rem; font-weight:700;" class="mb-2">
+            Gedeelde besturing<br/><em class="font-normal text-brand-gold">met synergiekracht</em>
+          </h3>
+
+          <p class="text-sm text-brand-slate leading-relaxed mb-5">
+            Het projectkernteam bepaalt zelf hoe men het gaat aanpakken — en draagt de delivery-verantwoordelijkheid.
+            De bedrijfsonderdelen bepalen zelf <em>hoe</em> en <em>wanneer</em>. Dit voorkomt dubbel werk en verliest de overhead.
+          </p>
+
+          <!-- Tags row -->
+          <div class="flex flex-wrap gap-2 mb-5">
+            <span class="tag text-brand-navy border-brand-navy/30 bg-brand-navy/5">synergie</span>
+            <span class="tag text-brand-navy border-brand-navy/30 bg-brand-navy/5">minder overhead</span>
+            <span class="tag text-brand-navy border-brand-navy/30 bg-brand-navy/5">delivery bij de onderdelen</span>
+            <span class="tag text-brand-navy border-brand-navy/30 bg-brand-navy/5">gedeeld eigenaarschap</span>
+          </div>
+
+          <!-- Governance structure -->
+          <div class="grid grid-cols-3 gap-3 mb-5">
+            <div class="bg-brand-cream rounded p-3 text-center border border-brand-gold/20">
+              <p class="text-[9px] font-bold uppercase tracking-widest text-brand-gold mb-1">Stuurgroep</p>
+              <p class="text-[10px] text-brand-slate leading-tight">Beslist over koers, prioriteiten en middelen.</p>
+            </div>
+            <div class="bg-brand-cream rounded p-3 text-center border border-brand-gold/20">
+              <p class="text-[9px] font-bold uppercase tracking-widest text-brand-gold mb-1">Regieboard</p>
+              <p class="text-[10px] text-brand-slate leading-tight">Bewaakt voortgang en lost knelpunten op.</p>
+            </div>
+            <div class="bg-brand-cream rounded p-3 text-center border border-brand-gold/20">
+              <p class="text-[9px] font-bold uppercase tracking-widest text-brand-gold mb-1">Projectkernteam</p>
+              <p class="text-[10px] text-brand-slate leading-tight">Coördineert inhoud, planning en besluiten.</p>
+            </div>
+          </div>
+
+          <!-- Expandable detail -->
+          <button
+            class="text-[10px] uppercase tracking-widest text-brand-gold font-semibold flex items-center gap-1 mb-3 hover:gap-2 transition-all"
+            onclick="toggleDetail(event,'detail-gedeeld')"
+          >
+            <span class="detail-label">Meer info</span>
+            <span class="detail-arrow">↓</span>
+          </button>
+          <div id="detail-gedeeld" class="detail-panel">
+            <p class="text-xs text-brand-slate leading-relaxed bg-brand-cream rounded p-4 border-l-2 border-brand-gold">
+              Kies dit als je <strong>schaarbord</strong> wil halen en eigenaarschap wil borgen in de onderdelen.
+              Ideaal wanneer meerdere teams actief bijdragen aan dezelfde deliverables en de regie gezamenlijk dragen.
+            </p>
+          </div>
+
+          <div class="flex-1"></div>
+          <button
+            class="mt-5 w-full py-3 bg-brand-navy text-white text-xs uppercase tracking-widest font-semibold hover:bg-brand-gold hover:text-brand-navy transition-colors duration-300 rounded-sm"
+            onclick="openModal(event,'Gedeelde besturing met synergiekracht')"
+          >
+            Kies dit model
+          </button>
+        </article>
+
+        <!-- ── Card: Centrale regie ── -->
+        <article
+          class="menu-card bg-white rounded-sm shadow-md border-t-2 border-brand-rust/30 p-7 flex flex-col"
+          data-card="centrale-regie"
+          onclick="selectCard(this)"
+          data-purpose="menu-item"
+        >
+          <div class="flex items-center justify-between mb-4">
+            <span class="tag text-brand-rust border-brand-rust/40 bg-brand-rust/5">Centrale sturing</span>
+            <span class="tooltip-wrap cursor-help">
+              <svg class="w-4 h-4 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke-width="1.5"/>
+                <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-width="2"/>
+              </svg>
+              <span class="tooltip-box">Hoge betrokkenheid van de PM vereist</span>
+            </span>
+          </div>
+
+          <h3 style="font-family:'Playfair Display',serif; font-size:1.25rem; font-weight:700;" class="mb-2">
+            Centrale regie bij de<br/><em class="font-normal text-brand-gold">ODV-projectmanager</em>
+          </h3>
+
+          <p class="text-sm text-brand-slate leading-relaxed mb-5">
+            De PM regisseert én coördineert alles. Vraagt aanpassingskracht omdat elk ODV-onderdeel anders werkt.
+            Bij uitval ontstaat een draagvlakvacuüm — weinig eigenaarschap in de onderdelen.
+          </p>
+
+          <div class="flex flex-wrap gap-2 mb-5">
+            <span class="tag text-brand-rust border-brand-rust/30 bg-brand-rust/5">één regisseur</span>
+            <span class="tag text-brand-rust border-brand-rust/30 bg-brand-rust/5">hoge PM-belasting</span>
+            <span class="tag text-brand-rust border-brand-rust/30 bg-brand-rust/5">kwetsbaar bij uitval</span>
+          </div>
+
+          <!-- Warning notice -->
+          <div class="bg-amber-50 border border-amber-200 rounded p-3 mb-5 flex items-start gap-2">
+            <span class="text-amber-500 text-sm mt-0.5">⚠</span>
+            <p class="text-[11px] text-amber-700 leading-relaxed">
+              Kies dit <strong>alleen</strong> als snelheid zwaarder weegt dan duurzaam draagvlak.
+            </p>
+          </div>
+
+          <button
+            class="text-[10px] uppercase tracking-widest text-brand-gold font-semibold flex items-center gap-1 mb-3 hover:gap-2 transition-all"
+            onclick="toggleDetail(event,'detail-centraal')"
+          >
+            <span class="detail-label">Meer info</span>
+            <span class="detail-arrow">↓</span>
+          </button>
+          <div id="detail-centraal" class="detail-panel">
+            <p class="text-xs text-brand-slate leading-relaxed bg-brand-cream rounded p-4 border-l-2 border-amber-400">
+              Dit model werkt goed in korte, tijdkritische trajecten waarbij snel schakelen noodzakelijk is.
+              Risico: als de PM wegvalt, stopt het project. Zorg altijd voor een deputy PM.
+            </p>
+          </div>
+
+          <div class="flex-1"></div>
+          <button
+            class="mt-5 w-full py-3 border border-brand-navy text-brand-navy text-xs uppercase tracking-widest font-semibold hover:bg-brand-navy hover:text-white transition-all duration-300 rounded-sm"
+            onclick="openModal(event,'Centrale regie bij de ODV-projectmanager')"
+          >
+            Kies dit model
+          </button>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- Elegant separator -->
+    <div class="flex items-center gap-6">
+      <div class="flex-1 gold-divider"></div>
+      <div class="text-brand-gold text-xs uppercase tracking-widest font-semibold px-2">of</div>
+      <div class="flex-1 gold-divider"></div>
+    </div>
+
+    <!-- ─────────────────────────────────────
+         SECTION 2 — Één onderdeel
+    ───────────────────────────────────── -->
+    <section id="section-een" data-purpose="service-category">
+      <div class="flex items-center gap-4 mb-10">
+        <div class="section-badge bg-brand-gold text-brand-navy border-2 border-brand-gold">2</div>
+        <div>
+          <h2 style="font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:700; color:#0A192F;">
+            Één ODV-onderdeel betrokken
+          </h2>
+          <p class="text-xs text-brand-slate uppercase tracking-widest mt-0.5">Dit speelt binnen één specifiek onderdeel.</p>
+        </div>
+      </div>
+      <div class="gold-divider mb-10"></div>
+
+      <div class="flex items-center gap-3 mb-8">
+        <div class="w-2 h-2 rounded-full bg-brand-gold flex-shrink-0"></div>
+        <p class="text-xs font-semibold uppercase tracking-widest text-brand-slate">Wat past bij jouw vraagstuk?</p>
+        <div class="flex-1 h-px bg-brand-gold/20"></div>
+        <p class="text-[11px] text-brand-slate italic">Kies de werkwijze die past bij hoe je werkt en wat je oplevert.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+
+        <!-- ── Card: Klassieke projectaanpak ── -->
+        <article
+          class="menu-card bg-brand-navy text-white rounded-sm shadow-xl relative p-7 flex flex-col overflow-hidden"
+          data-card="klassiek"
+          onclick="selectCard(this)"
+          data-purpose="menu-item"
+        >
+          <!-- Chef's rec badge -->
+          <div class="absolute -top-0 left-6">
+            <span class="bg-brand-gold text-brand-navy text-[9px] font-bold px-3 py-1 uppercase tracking-widest inline-block rounded-b">
+              Prince2 / Waterfall
+            </span>
+          </div>
+
+          <!-- Background pattern -->
+          <div class="absolute inset-0 opacity-5 pointer-events-none">
+            <svg width="100%" height="100%"><pattern id="grid" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="white" stroke-width="0.5"/></pattern><rect width="100%" height="100%" fill="url(#grid)"/></svg>
+          </div>
+
+          <div class="relative z-10 flex flex-col flex-1 pt-6">
+            <div class="flex items-center justify-between mb-4">
+              <span class="tag text-brand-gold border-brand-gold/50 bg-brand-gold/10">Formele aanpak</span>
+              <span style="font-family:'Playfair Display',serif; font-style:italic; color:#C5A059; font-size:0.9rem;">Klassiek</span>
+            </div>
+
+            <h3 style="font-family:'Playfair Display',serif; font-size:1.25rem; font-weight:700;" class="mb-2">
+              Klassieke projectaanpak
+            </h3>
+
+            <p class="text-sm text-slate-300 leading-relaxed mb-5">
+              Je werkt met traditionele projectdocumentatie. Vaste fasen, formele go/no-go momenten en gestructureerde oplevering.
+              De PM stuurt op mijlpalen en rapporteert via PIF en PID.
+            </p>
+
+            <div class="grid grid-cols-2 gap-2 mb-5">
+              <div class="bg-white/10 rounded p-2 text-center border border-white/10">
+                <p class="text-[9px] font-bold uppercase tracking-widest text-brand-gold mb-0.5">Documentatie</p>
+                <p class="text-[10px] text-slate-300">PIF &amp; PID</p>
+              </div>
+              <div class="bg-white/10 rounded p-2 text-center border border-white/10">
+                <p class="text-[9px] font-bold uppercase tracking-widest text-brand-gold mb-0.5">Fasen</p>
+                <p class="text-[10px] text-slate-300">Vaste fasen</p>
+              </div>
+              <div class="bg-white/10 rounded p-2 text-center border border-white/10">
+                <p class="text-[9px] font-bold uppercase tracking-widest text-brand-gold mb-0.5">Besluitvorming</p>
+                <p class="text-[10px] text-slate-300">Formeel</p>
+              </div>
+              <div class="bg-white/10 rounded p-2 text-center border border-white/10">
+                <p class="text-[9px] font-bold uppercase tracking-widest text-brand-gold mb-0.5">Oplevering</p>
+                <p class="text-[10px] text-slate-300">Sequentieel</p>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mb-5">
+              <span class="tag text-brand-gold border-brand-gold/40">PIF &amp; PID</span>
+              <span class="tag text-brand-gold border-brand-gold/40">vaste fasen</span>
+              <span class="tag text-brand-gold border-brand-gold/40">formele besluitvorming</span>
+              <span class="tag text-brand-gold border-brand-gold/40">sequentiële oplevering</span>
+            </div>
+
+            <button
+              class="text-[10px] uppercase tracking-widest text-brand-gold font-semibold flex items-center gap-1 mb-3 hover:gap-2 transition-all"
+              onclick="toggleDetail(event,'detail-klassiek')"
+            >
+              <span class="detail-label">Meer info</span>
+              <span class="detail-arrow">↓</span>
+            </button>
+            <div id="detail-klassiek" class="detail-panel">
+              <p class="text-xs text-slate-300 leading-relaxed bg-white/10 rounded p-4 border-l-2 border-brand-gold">
+                Kies dit als je project vraagt om <strong>formele documentatie</strong> en vaste mijlpalen.
+                Geschikt voor projecten met hoge compliance-eisen of wanneer contractuele oplevering vereist is.
+              </p>
+            </div>
+
+            <div class="flex-1"></div>
+            <button
+              class="mt-5 w-full py-3 bg-brand-gold text-brand-navy text-xs uppercase tracking-widest font-bold hover:bg-white transition-colors duration-300 rounded-sm"
+              onclick="openModal(event,'Klassieke projectaanpak')"
+            >
+              Kies klassieke aanpak
+            </button>
+          </div>
+        </article>
+
+        <!-- ── Card: Moderne projectaanpak ── -->
+        <article
+          class="menu-card bg-white rounded-sm shadow-md border-t-2 border-emerald-500/40 p-7 flex flex-col"
+          data-card="modern"
+          onclick="selectCard(this)"
+          data-purpose="menu-item"
+        >
+          <div class="flex items-center justify-between mb-4">
+            <span class="tag text-emerald-700 border-emerald-400/50 bg-emerald-50">Adaptieve werkwijze</span>
+            <span style="font-family:'Playfair Display',serif; font-style:italic; color:#C5A059; font-size:0.9rem;">Modern</span>
+          </div>
+
+          <h3 style="font-family:'Playfair Display',serif; font-size:1.25rem; font-weight:700;" class="mb-2">
+            Moderne projectaanpak
+          </h3>
+
+          <p class="text-sm text-brand-slate leading-relaxed mb-5">
+            Je werkt met lichtere documentatie en moderne tooling. De PM fungeert als Epic Owner en beheert het werk via Azure DevOps.
+            Documentatie via EVS — minder papier, meer sturing op waarde.
+          </p>
+
+          <div class="grid grid-cols-2 gap-2 mb-5">
+            <div class="bg-brand-cream rounded p-2 text-center border border-emerald-200">
+              <p class="text-[9px] font-bold uppercase tracking-widest text-emerald-700 mb-0.5">Tooling</p>
+              <p class="text-[10px] text-brand-slate">Azure DevOps</p>
+            </div>
+            <div class="bg-brand-cream rounded p-2 text-center border border-emerald-200">
+              <p class="text-[9px] font-bold uppercase tracking-widest text-emerald-700 mb-0.5">Rol PM</p>
+              <p class="text-[10px] text-brand-slate">Epic Owner</p>
+            </div>
+            <div class="bg-brand-cream rounded p-2 text-center border border-emerald-200">
+              <p class="text-[9px] font-bold uppercase tracking-widest text-emerald-700 mb-0.5">Documentatie</p>
+              <p class="text-[10px] text-brand-slate">EVS</p>
+            </div>
+            <div class="bg-brand-cream rounded p-2 text-center border border-emerald-200">
+              <p class="text-[9px] font-bold uppercase tracking-widest text-emerald-700 mb-0.5">Oplevering</p>
+              <p class="text-[10px] text-brand-slate">Incrementeel</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 mb-5">
+            <span class="tag text-emerald-700 border-emerald-400/50">EVS</span>
+            <span class="tag text-emerald-700 border-emerald-400/50">Azure DevOps</span>
+            <span class="tag text-emerald-700 border-emerald-400/50">Epic Owner</span>
+            <span class="tag text-emerald-700 border-emerald-400/50">incrementele oplevering</span>
+          </div>
+
+          <button
+            class="text-[10px] uppercase tracking-widest text-brand-gold font-semibold flex items-center gap-1 mb-3 hover:gap-2 transition-all"
+            onclick="toggleDetail(event,'detail-modern')"
+          >
+            <span class="detail-label">Meer info</span>
+            <span class="detail-arrow">↓</span>
+          </button>
+          <div id="detail-modern" class="detail-panel">
+            <p class="text-xs text-brand-slate leading-relaxed bg-brand-cream rounded p-4 border-l-2 border-emerald-500">
+              Kies dit als je team werkt in <strong>ADO</strong> en documentatie via EVS volstaat.
+              Ideaal bij iteratieve oplevering, kortlopende sprints en directe zichtbaarheid op voortgang.
+            </p>
+          </div>
+
+          <div class="flex-1"></div>
+          <button
+            class="mt-5 w-full py-3 bg-emerald-700 text-white text-xs uppercase tracking-widest font-semibold hover:bg-emerald-800 transition-colors duration-300 rounded-sm"
+            onclick="openModal(event,'Moderne projectaanpak')"
+          >
+            Kies moderne aanpak
+          </button>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ─────────────────────────────────────
+         SECTION 3 — Klaar om te starten
+    ───────────────────────────────────── -->
+    <section id="section-starten" data-purpose="checklist">
+      <div class="bg-brand-navy rounded-sm overflow-hidden shadow-2xl">
+        <!-- Header band -->
+        <div class="bg-brand-gold px-8 py-5 flex items-center justify-between">
+          <div>
+            <p class="text-[9px] uppercase tracking-widest font-bold text-brand-navy/60 mb-1">Stap 3</p>
+            <h2 style="font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; color:#0A192F;">
+              Klaar om te starten?
+            </h2>
+          </div>
+          <div class="text-brand-navy/30 text-4xl" style="font-family:'Playfair Display',serif; font-style:italic;">✓</div>
+        </div>
+
+        <div class="p-8">
+          <p class="text-sm text-slate-300 mb-8 leading-relaxed">Dit hebben we van jou nodig om de juiste aanpak te activeren:</p>
+
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Checklist items -->
+            <label class="checklist-item flex items-start gap-3 bg-white/8 rounded p-4 border border-white/10 cursor-pointer hover:border-brand-gold/50 transition-colors group">
+              <input type="checkbox" class="mt-0.5 accent-brand-gold" onchange="updateProgress()"/>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-brand-gold mb-0.5">Aanleiding</p>
+                <p class="text-xs text-slate-400 leading-relaxed">Wat is de aanleiding van dit vraagstuk?</p>
+              </div>
+            </label>
+
+            <label class="checklist-item flex items-start gap-3 bg-white/8 rounded p-4 border border-white/10 cursor-pointer hover:border-brand-gold/50 transition-colors group">
+              <input type="checkbox" class="mt-0.5 accent-brand-gold" onchange="updateProgress()"/>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-brand-gold mb-0.5">Gewenst resultaat</p>
+                <p class="text-xs text-slate-400 leading-relaxed">Wat wil je bereiken aan het einde?</p>
+              </div>
+            </label>
+
+            <label class="checklist-item flex items-start gap-3 bg-white/8 rounded p-4 border border-white/10 cursor-pointer hover:border-brand-gold/50 transition-colors group">
+              <input type="checkbox" class="mt-0.5 accent-brand-gold" onchange="updateProgress()"/>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-brand-gold mb-0.5">Betrokken onderdelen</p>
+                <p class="text-xs text-slate-400 leading-relaxed">Welke ODV-onderdelen zijn betrokken?</p>
+              </div>
+            </label>
+
+            <label class="checklist-item flex items-start gap-3 bg-white/8 rounded p-4 border border-white/10 cursor-pointer hover:border-brand-gold/50 transition-colors group">
+              <input type="checkbox" class="mt-0.5 accent-brand-gold" onchange="updateProgress()"/>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-brand-gold mb-0.5">Mate van duidelijkheid</p>
+                <p class="text-xs text-slate-400 leading-relaxed">Hoe helder is de scope al?</p>
+              </div>
+            </label>
+
+            <label class="checklist-item flex items-start gap-3 bg-white/8 rounded p-4 border border-white/10 cursor-pointer hover:border-brand-gold/50 transition-colors group">
+              <input type="checkbox" class="mt-0.5 accent-brand-gold" onchange="updateProgress()"/>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-brand-gold mb-0.5">Deadline</p>
+                <p class="text-xs text-slate-400 leading-relaxed">Is er een harde deadline of mijlpaal?</p>
+              </div>
+            </label>
+
+            <label class="checklist-item flex items-start gap-3 bg-white/8 rounded p-4 border border-white/10 cursor-pointer hover:border-brand-gold/50 transition-colors group">
+              <input type="checkbox" class="mt-0.5 accent-brand-gold" onchange="updateProgress()"/>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-brand-gold mb-0.5">Afhankelijkheden</p>
+                <p class="text-xs text-slate-400 leading-relaxed">Zijn er externe afhankelijkheden?</p>
+              </div>
+            </label>
+
+            <label class="checklist-item sm:col-span-2 lg:col-span-3 flex items-start gap-3 bg-white/8 rounded p-4 border border-white/10 cursor-pointer hover:border-brand-gold/50 transition-colors group">
+              <input type="checkbox" class="mt-0.5 accent-brand-gold" onchange="updateProgress()"/>
+              <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-brand-gold mb-0.5">Gewenste sturing</p>
+                <p class="text-xs text-slate-400 leading-relaxed">Wil je gedeeld eigenaarschap of centrale regie?</p>
+              </div>
+            </label>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="mt-8 mb-4">
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Voortgang intake</p>
+              <p id="progress-label" class="text-[10px] text-brand-gold font-bold">0 / 7 ingevuld</p>
+            </div>
+            <div class="h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div id="checklist-bar" class="h-full bg-brand-gold rounded-full transition-all duration-500" style="width:0%"></div>
+            </div>
+          </div>
+
+          <button
+            id="start-btn"
+            class="w-full py-4 bg-brand-gold text-brand-navy text-xs uppercase tracking-[0.25em] font-bold hover:bg-white transition-colors duration-300 rounded-sm mt-4 opacity-50 cursor-not-allowed"
+            disabled
+            onclick="openModal(event,'intake-formulier')"
+          >
+            Neem contact op met je ODV-projectmanager
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ════════════════════════════════════════
+       FOOTER
+  ════════════════════════════════════════ -->
+  <footer class="bg-white border-t border-brand-gold/20 py-14 px-6 text-center" data-purpose="footer">
+    <div class="max-w-sm mx-auto">
+      <div class="gold-divider w-20 mx-auto mb-8"></div>
+      <p style="font-family:'Playfair Display',serif; font-style:italic; font-size:1rem;" class="text-brand-navy mb-2">
+        Samenwerken aan succes —
+      </p>
+      <p class="text-xs text-brand-slate mb-6 leading-relaxed">
+        Vragen over de aanpak? Neem contact op met<br/>
+        je ODV-projectmanager voor een bespoke advies.
+      </p>
+      <a
+        href="mailto:pmo@odv.nl"
+        class="inline-block text-brand-gold border-b border-brand-gold pb-1 text-xs tracking-widest uppercase font-semibold hover:text-brand-navy hover:border-brand-navy transition-colors duration-300"
+      >
+        Neem contact op
+      </a>
+      <div class="gold-divider w-20 mx-auto mt-8 mb-6"></div>
+      <div class="flex items-center justify-center gap-2 mb-3">
+        <div class="w-6 h-px bg-brand-gold/40"></div>
+        <span class="text-[10px] font-bold uppercase tracking-[0.3em] text-brand-navy">SAMEN<sup style="font-size:8px">1</sup>ODV</span>
+        <div class="w-6 h-px bg-brand-gold/40"></div>
+      </div>
+      <p class="text-[9px] text-slate-400 uppercase tracking-widest">© 2025 ODV Projectmanagement · Intern gebruik</p>
+    </div>
+  </footer>
+
+  <!-- ════════════════════════════════════════
+       MODAL
+  ════════════════════════════════════════ -->
+  <div id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="bg-white rounded-sm shadow-2xl max-w-md w-full mx-4 overflow-hidden" style="animation: fadeUp 0.3s ease;">
+      <!-- Modal header -->
+      <div class="bg-brand-navy px-8 py-6 flex items-start justify-between">
+        <div>
+          <p class="text-[9px] uppercase tracking-widest text-brand-gold font-semibold mb-1">Selectie geregistreerd</p>
+          <h2 id="modal-title" style="font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; color:white;"></h2>
+        </div>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white text-xl leading-none mt-1">✕</button>
+      </div>
+      <!-- Modal body -->
+      <div class="p-8">
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-10 h-10 rounded-full bg-brand-gold/15 flex items-center justify-center">
+            <svg class="w-5 h-5 text-brand-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <p class="text-sm text-brand-slate">
+            Je keuze is vastgelegd. Een ODV-projectmanager<br/>neemt contact met je op om de details te bespreken.
+          </p>
+        </div>
+        <div class="bg-brand-cream rounded p-4 border border-brand-gold/20 mb-6">
+          <p class="text-[10px] uppercase tracking-widest text-brand-gold font-bold mb-2">Volgende stap</p>
+          <ul class="text-xs text-brand-slate space-y-1">
+            <li>→ Intakegesprek inplannen</li>
+            <li>→ Scope en deliverables vastleggen</li>
+            <li>→ Projectplan opstellen</li>
+          </ul>
+        </div>
+        <button
+          onclick="closeModal()"
+          class="w-full py-3 bg-brand-navy text-white text-xs uppercase tracking-widest font-semibold hover:bg-brand-gold hover:text-brand-navy transition-colors duration-300 rounded-sm"
+        >
+          Sluiten
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       SCRIPTS
+  ════════════════════════════════════════ -->
+  <script>
+    /* ── Card selection ── */
+    function selectCard(card) {
+      const section = card.closest('section');
+      section.querySelectorAll('.menu-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    }
+
+    /* ── Toggle expandable detail ── */
+    function toggleDetail(e, id) {
+      e.stopPropagation();
+      const panel = document.getElementById(id);
+      const btn   = e.currentTarget;
+      const label = btn.querySelector('.detail-label');
+      const arrow = btn.querySelector('.detail-arrow');
+      const open  = panel.classList.toggle('open');
+      label.textContent = open ? 'Minder info' : 'Meer info';
+      arrow.textContent = open ? '↑' : '↓';
+    }
+
+    /* ── Modal ── */
+    function openModal(e, name) {
+      e.stopPropagation();
+      document.getElementById('modal-title').textContent = name;
+      const overlay = document.getElementById('modal-overlay');
+      overlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('show');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('modal-overlay').addEventListener('click', function(e) {
+      if (e.target === this) closeModal();
+    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    /* ── Checklist progress ── */
+    function updateProgress() {
+      const boxes   = document.querySelectorAll('.checklist-item input[type=checkbox]');
+      const total   = boxes.length;
+      const checked = [...boxes].filter(b => b.checked).length;
+      const pct     = Math.round((checked / total) * 100);
+
+      document.getElementById('checklist-bar').style.width = pct + '%';
+      document.getElementById('progress-label').textContent = checked + ' / ' + total + ' ingevuld';
+      document.getElementById('progress-bar').style.width   = pct + '%';
+
+      const btn = document.getElementById('start-btn');
+      if (checked === total) {
+        btn.disabled = false;
+        btn.classList.remove('opacity-50','cursor-not-allowed');
+        btn.classList.add('hover:bg-white');
+      } else {
+        btn.disabled = true;
+        btn.classList.add('opacity-50','cursor-not-allowed');
+      }
+    }
+
+    /* ── Scroll-based nav highlight ── */
+    const sections = ['section-meerdere','section-een','section-starten'];
+    const navLinks  = document.querySelectorAll('nav a');
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && window.scrollY >= el.offsetTop - 120) current = id;
+      });
+      navLinks.forEach(a => {
+        const href = a.getAttribute('href').slice(1);
+        a.classList.toggle('text-brand-gold', href === current);
+        a.classList.toggle('text-slate-400',   href !== current);
+      });
+    }, { passive: true });
+
+    /* ── Intersection fade-up for cards ── */
+    if ('IntersectionObserver' in window) {
+      const obs = new IntersectionObserver(entries => {
+        entries.forEach(en => {
+          if (en.isIntersecting) {
+            en.target.style.opacity = '1';
+            en.target.style.transform = 'translateY(0)';
+          }
+        });
+      }, { threshold: 0.1 });
+      document.querySelectorAll('.menu-card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition += ', opacity 0.5s ease, transform 0.5s ease';
+        obs.observe(card);
+      });
+    }
+  </script>
+
+</body>
+</html>
